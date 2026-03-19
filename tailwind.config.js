@@ -1,0 +1,27 @@
+module.exports = {
+	content: ["./src/**/*.{js,ts,jsx,tsx}"],
+	theme: {
+		extend: {
+			spacing: {
+				18: "4.5rem",
+				1600: "1600px",
+			},
+			fontSize: {
+				"4xl": "64px",
+				"3xl": "48px",
+				"2xl": "24px",
+				xl: "18px",
+				base: "14px",
+				sm: "11px",
+			},
+			fontFamily: {
+				body: ["var(--font-body)", "sans-serif"],
+				display: ["var(--font-display)", "sans-serif"],
+			},
+			borderWidth: {
+				DEFAULT: "1px",
+			},
+		},
+	},
+	plugins: [],
+};
