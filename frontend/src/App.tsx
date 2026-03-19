@@ -1,5 +1,4 @@
-import "./App.css";
-import AppHeader from "./components/AppHeader";
+import AppHeader from "./components/layout/AppHeader";
 
 function App() {
 	return <AppHeader />;

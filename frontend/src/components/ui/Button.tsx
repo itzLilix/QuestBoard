@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import clsx from "clsx";
+import { FC } from "react";
 
 const buttonVariants = cva(
 	`
@@ -36,20 +37,17 @@ const buttonVariants = cva(
 );
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
-	VariantProps<typeof buttonVariants> & {
-		loading?: boolean;
-	};
+	VariantProps<typeof buttonVariants>;
 
-export default function Button({
+const Button: FC<ButtonProps> = ({
 	className,
 	variant,
 	csize,
 	fullWidth,
 	disabled,
-	loading,
 	children,
 	...props
-}: ButtonProps) {
+}) => {
 	return (
 		<button
 			type="button"
@@ -57,10 +55,12 @@ export default function Button({
 				buttonVariants({ variant, csize, fullWidth }),
 				className,
 			)}
-			disabled={disabled || loading}
+			disabled={disabled}
 			{...props}
 		>
-			{loading ? "Loading..." : children}
+			{children}
 		</button>
 	);
-}
+};
+
+export default Button;

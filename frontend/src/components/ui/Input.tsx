@@ -1,12 +1,10 @@
+import { FC } from "react";
+
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 	csize?: "sm" | "md";
 };
 
-export default function Input({
-	csize = "md",
-	className,
-	...props
-}: InputProps) {
+const Input: FC<InputProps> = ({ csize = "md", className, ...props }) => {
 	return (
 		<input
 			className={`
@@ -25,4 +23,6 @@ export default function Input({
 			{...props}
 		/>
 	);
-}
+};
+
+export default Input;

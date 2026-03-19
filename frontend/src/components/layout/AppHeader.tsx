@@ -1,30 +1,31 @@
-import Button from "./ui/Button";
-import Input from "./ui/Input";
+import { Link } from "react-router-dom";
+import Button from "../ui/Button";
+import Input from "../ui/Input";
 
 export default function Header() {
 	return (
 		<header className="bg-[var(--bg-base-tp)] h-18 z-10 sticky top-0 w-full border-b border-[var(--border)] backdrop-blur-sm">
 			<div className="p-4 flex items-center justify-between h-full max-w-1600 mx-auto">
-				<a
+				<Link
+					to="/"
 					className="text-[var(--text-primary)] text-2xl font-display"
-					href="#"
 				>
 					<span className="text-[var(--accent)]">Quest</span>
 					<span>Board</span>
-				</a>
+				</Link>
 				<div className="flex items-center space-x-4">
-					<a
-						href="#"
+					<Link
+						to="#"
 						className="text-[var(--text-secondary)] hover:text-[var(--accent)]"
 					>
 						Сессии
-					</a>
-					<a
-						href="#"
+					</Link>
+					<Link
+						to="#"
 						className="text-[var(--text-secondary)] hover:text-[var(--accent)]"
 					>
 						Мастера
-					</a>
+					</Link>
 				</div>
 				<Input placeholder={"Поиск..."} csize={"sm"} />
 				<Button onClick={() => {}} variant="secondary" csize="sm">
