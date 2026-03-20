@@ -2,34 +2,43 @@ package auth
 
 import (
 	"github.com/gofiber/fiber/v3"
+	"github.com/jackc/pgx/v5"
 )
 
-func Handler(app *fiber.App) {
+type Handler struct {
+    db *pgx.Conn
+}
+
+func NewHandler(db *pgx.Conn) *Handler {
+	return &Handler{db: db}
+}
+
+func (h *Handler) RegisterRoutes(app *fiber.App) {
 	auth := app.Group("/auth")
-	auth.Post("/login", login)
-	auth.Post("/signup", signup)
-	auth.Post("/logout", logout)
-	auth.Get("/activate/:link", activate)
-	auth.Get("/refresh", refresh)
+	auth.Post("/login", h.login)
+	auth.Post("/signup", h.signup)
+	auth.Post("/logout", h.logout)
+	auth.Get("/activate/:link", h.activate)
+	auth.Get("/refresh", h.refresh)
 
 }
 
-func login(c fiber.Ctx) error {
+func (h *Handler) login(c fiber.Ctx) error {
 	return nil;
 }
 
-func signup(c fiber.Ctx) error {
+func (h *Handler) signup(c fiber.Ctx) error {
 	return nil;
 }
 
-func logout(c fiber.Ctx) error {
+func (h *Handler) logout(c fiber.Ctx) error {
 	return nil;
 }
 
-func activate(c fiber.Ctx) error {
+func (h *Handler) activate(c fiber.Ctx) error {
 	return nil;
 }
 
-func refresh(c fiber.Ctx) error {
+func (h *Handler) refresh(c fiber.Ctx) error {
 	return nil;
 }
