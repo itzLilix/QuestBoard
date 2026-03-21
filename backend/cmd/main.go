@@ -21,7 +21,7 @@ func main() {
 	}
 
 	app := fiber.New()
-
+	
 	dbURL := os.Getenv("POSTGRES_URL")
 	conn, err := database.Connect(dbURL)
 	if err != nil {
@@ -29,6 +29,12 @@ func main() {
 	}
 	fmt.Println("Successfully connected to database")
 	defer conn.Close(context.Background())
+
+	err = database.RunMigrations(os.Getenv("MIGRATE_URL"))
+	if err != nil {
+		log.Fatal("Failed to run migrations: ", err)
+	}
+	fmt.Println("Migrations ran successfully")
 
 	authHandler := auth.NewHandler(conn)
 	gamesHandler := games.NewHandler(conn)
