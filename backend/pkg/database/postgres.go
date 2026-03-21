@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
@@ -22,7 +23,7 @@ func RunMigrations(connectionString string) error {
 		return err
 	}
 
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
 	return nil
