@@ -2,43 +2,105 @@ package auth
 
 import (
 	"github.com/gofiber/fiber/v3"
-	"github.com/jackc/pgx/v5"
 )
 
-type Handler struct {
-    db *pgx.Conn
+type Handler interface {
+	RegisterRoutes(app *fiber.App)
 }
 
-func NewHandler(db *pgx.Conn) *Handler {
-	return &Handler{db: db}
+type handler struct {
+	service Service
 }
 
-func (h *Handler) RegisterRoutes(app *fiber.App) {
+func NewHandler(service Service) *handler {
+	return &handler{service: service}
+}
+
+func (h *handler) RegisterRoutes(app *fiber.App) {
 	auth := app.Group("/auth")
 	auth.Post("/login", h.login)
 	auth.Post("/signup", h.signup)
 	auth.Post("/logout", h.logout)
 	auth.Get("/activate/:link", h.activate)
 	auth.Get("/refresh", h.refresh)
-
+	auth.Get("/me", h.restoreSession)
 }
 
-func (h *Handler) login(c fiber.Ctx) error {
+func (h *handler) login(c fiber.Ctx) error {
+	type request struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	var req request
+	if err := c.Bind().Body(&req); err != nil {
+		return err
+	}
+	user, token, err := h.service.Login(req.Username, req.Password)
+	if err != nil {
+		return err
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    token,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	return c.Status(fiber.StatusOK).JSON(user)
+}
+
+func (h *handler) signup(c fiber.Ctx) error {
+	type request struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req request
+	if err := c.Bind().Body(&req); err != nil {
+        return err
+    }
+	user, token, err := h.service.Register(req.Username, req.Email, req.Password)
+	if err != nil {
+		return err
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    token,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	return c.Status(fiber.StatusCreated).JSON(user)
+}
+
+func (h *handler) logout(c fiber.Ctx) error {
+	c.ClearCookie("access_token")
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (h *handler) activate(c fiber.Ctx) error {
 	return nil;
 }
 
-func (h *Handler) signup(c fiber.Ctx) error {
+func (h *handler) refresh(c fiber.Ctx) error {
 	return nil;
 }
 
-func (h *Handler) logout(c fiber.Ctx) error {
-	return nil;
-}
+func (h *handler) restoreSession(c fiber.Ctx) error {
+	tokenString := c.Cookies("access_token")
 
-func (h *Handler) activate(c fiber.Ctx) error {
-	return nil;
-}
+	if tokenString == "" {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
 
-func (h *Handler) refresh(c fiber.Ctx) error {
-	return nil;
+	user, err := h.service.ValidateToken(tokenString)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(user)
 }

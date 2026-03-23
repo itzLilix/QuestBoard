@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/itzLilix/QuestBoard/backend/internal/auth"
 	"github.com/itzLilix/QuestBoard/backend/internal/games"
 	"github.com/itzLilix/QuestBoard/backend/pkg/database"
@@ -21,6 +22,11 @@ func main() {
 	}
 
 	app := fiber.New()
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3001"},
+		AllowCredentials: true,
+		AllowHeaders:     []string{"Content-Type"},
+	}))
 	
 	dbURL := os.Getenv("POSTGRES_URL")
 	conn, err := database.Connect(dbURL)
@@ -36,9 +42,12 @@ func main() {
 	}
 	fmt.Println("Migrations ran successfully")
 
-	authHandler := auth.NewHandler(conn)
+	authRepo := auth.NewRepository(conn)
+	authService := auth.NewService(authRepo)
+	authHandler := auth.NewHandler(authService)
+	
 	gamesHandler := games.NewHandler(conn)
-
+	
 	authHandler.RegisterRoutes(app)
 	gamesHandler.RegisterRoutes(app)
 

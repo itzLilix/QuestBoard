@@ -7,8 +7,8 @@ module.exports = {
 				1600: "1600px",
 			},
 			fontSize: {
-				"4xl": "64px",
-				"3xl": "48px",
+				"4xl": "48px",
+				"3xl": "32px",
 				"2xl": "24px",
 				xl: "18px",
 				base: "14px",
