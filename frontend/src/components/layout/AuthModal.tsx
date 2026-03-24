@@ -7,12 +7,14 @@ import Button from "../ui/Button";
 import { api } from "../../api/axios";
 import { AxiosError } from "axios";
 import useAuth from "../../hooks/useAuth";
+import { error } from "console";
 
 const LOGIN_URL = "/auth/login";
-const REGISTER_URL = "/auth/register";
+const REGISTER_URL = "/auth/signup";
 
-const USER_REGEX = /^[A-Za-z][A-Za-z0-9-_]{3,32}$/;
-const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
+const USER_REGEX = /^[A-Za-z][A-Za-z0-9-_]{2,32}$/;
+const PWD_REGEX =
+	/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%])[A-Za-z0-9!@#$%]{8,24}$/;
 
 export default function AuthModal() {
 	const { isOpen, modalType, openModal, closeModal } = useAuthModal();
@@ -21,11 +23,12 @@ export default function AuthModal() {
 	const [user, setUser] = useState("");
 	const [pwd, setPwd] = useState("");
 	const [email, setEmail] = useState("");
-
 	const [errMsg, setErrMsg] = useState("");
+
 	useEffect(() => {
 		setErrMsg("");
 	}, [user, pwd]);
+
 	useEffect(() => {
 		setUser("");
 		setPwd("");
@@ -34,6 +37,57 @@ export default function AuthModal() {
 	}, [modalType]);
 
 	if (!isOpen) return null;
+
+	const validateRegister = () => {
+		if (!USER_REGEX.test(user)) {
+			return "Имя пользователя: 3-32 символа, буквы и цифры";
+		}
+		if (!PWD_REGEX.test(pwd)) {
+			return "Пароль: 8-24 символа, буквы, цифры и !@#$%";
+		}
+		return null;
+	};
+
+	const handleLogin = async () => {
+		const response = await api.post(LOGIN_URL, {
+			username: user,
+			password: pwd,
+		});
+		console.log(response);
+		login(response.data);
+	};
+
+	const handleRegister = async () => {
+		const validationError = validateRegister();
+		if (validationError) {
+			throw new Error(validationError);
+		}
+
+		const response = await api.post(REGISTER_URL, {
+			email: email,
+			username: user,
+			password: pwd,
+		});
+		login(response.data.user);
+	};
+
+	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		try {
+			if (modalType === "login") {
+				await handleLogin();
+			} else {
+				await handleRegister();
+			}
+			closeModal();
+		} catch (err) {
+			const axiosErr = err as AxiosError<{ message: string }>;
+			console.log(axiosErr.response);
+			setErrMsg(axiosErr.response?.data?.message || "Ошибка");
+		}
+	};
+
 	return (
 		<>
 			<div
@@ -69,28 +123,7 @@ export default function AuthModal() {
 				{modalType === "login" ? (
 					<div key="login">
 						<form
-							onSubmit={async (e) => {
-								e.preventDefault();
-
-								try {
-									const response = await api.post(LOGIN_URL, {
-										username: user,
-										password: pwd,
-									});
-									console.log(response);
-									login(response.data.user);
-									closeModal();
-								} catch (err) {
-									const axiosErr = err as AxiosError<{
-										message: string;
-									}>;
-									console.error(err);
-									setErrMsg(
-										axiosErr.response?.data?.message ||
-											"Login failed",
-									);
-								}
-							}}
+							onSubmit={handleSubmit}
 							className="flex flex-col gap-4 mt-6"
 						>
 							<div className="flex flex-col gap-2">
@@ -145,46 +178,7 @@ export default function AuthModal() {
 				) : (
 					<div key="register">
 						<form
-							onSubmit={async (e) => {
-								e.preventDefault();
-
-								const v1 = USER_REGEX.test(user);
-								const v2 = PWD_REGEX.test(pwd);
-								if (!v1) {
-									setErrMsg(
-										"Имя пользователя: 4-32 символа, буквы и цифры",
-									);
-									return;
-								} else if (!v2) {
-									setErrMsg(
-										"Пароль: 8-24 символа, буквы, цифры и !@#$%",
-									);
-									return;
-								}
-
-								try {
-									const response = await api.post(
-										REGISTER_URL,
-										{
-											email: email,
-											username: user,
-											password: pwd,
-										},
-									);
-									console.log(response);
-									login(response.data.user);
-									closeModal();
-								} catch (err) {
-									console.error(err);
-									const axiosErr = err as AxiosError<{
-										message: string;
-									}>;
-									setErrMsg(
-										axiosErr.response?.data?.message ||
-											"Registration failed",
-									);
-								}
-							}}
+							onSubmit={handleSubmit}
 							className="flex flex-col gap-4 mt-6"
 						>
 							<div className="flex flex-col gap-2">

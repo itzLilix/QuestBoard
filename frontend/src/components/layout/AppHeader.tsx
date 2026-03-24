@@ -5,10 +5,12 @@ import useAuth from "../../hooks/useAuth";
 import NotificationBell from "../ui/NotificationBell";
 import useAuthModal from "../../hooks/useAuthModal";
 import Loading from "../ui/Loading";
+import { useEffect } from "react";
 
 export default function Header() {
 	const { isLoading, user } = useAuth();
 	const { openModal } = useAuthModal();
+
 	return (
 		<header className="bg-[var(--bg-base-tp)] h-18 z-10 sticky top-0 w-full border-b border-[var(--border)] backdrop-blur-sm">
 			<div className="p-4 flex items-center justify-between h-full max-w-1600 mx-auto">

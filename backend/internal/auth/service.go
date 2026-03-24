@@ -1,11 +1,14 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,11 +33,11 @@ func (s *service) ValidateToken(tokenString string) (*User, error){
 	var user *User
 
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalidToken
 	} else if claims, ok := token.Claims.(*claims); ok {
 		user, err = s.repo.GetUserByID(claims.ID)
 		if err != nil {
-			return nil, err
+			return nil, ErrUserNotFound
 		}
 	} else {
 		return nil, fmt.Errorf("unknown claims type")
@@ -63,6 +66,15 @@ func (s *service) Register(username, email, password string) (*User, string, err
 	}
 	err = s.repo.CreateUser(user)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			if strings.Contains(pgErr.ConstraintName, "username") {
+				return nil, "", ErrUsernameExists
+			}
+			if strings.Contains(pgErr.ConstraintName, "email") {
+				return nil, "", ErrEmailExists
+    }
+		}
 		return nil, "", err
 	}
 
@@ -71,18 +83,18 @@ func (s *service) Register(username, email, password string) (*User, string, err
 		return nil, "", err
 	}
 
-	return user, token, err
+	return user, token, nil
 }
 
 func (s *service) Login(username, password string) (*User, string, error) {
 	user, err := s.repo.GetUserByUsername(username)
 	if err != nil {
-		return nil, "", err
+		return nil, "", ErrUserNotFound
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return nil, "", err
+		return nil, "", ErrWrongPassword
 	}
 
 	token, err := s.generateAccessToken(user)

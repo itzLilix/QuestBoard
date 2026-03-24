@@ -24,7 +24,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 			});
 	}, []);
 
-	const login = (user: IUser) => {
+	const login = (user: IUser | null) => {
+		if (!user) {
+			console.warn("Login called with invalid user:", user);
+			return;
+		}
 		setUser(user);
 	};
 

@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -37,8 +39,13 @@ func (h *handler) login(c fiber.Ctx) error {
 	}
 	user, token, err := h.service.Login(req.Username, req.Password)
 	if err != nil {
-		return err
-	}
+    if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrWrongPassword) {
+        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+            "message": "Неверное имя пользователя или пароль",
+        })
+    }
+    return c.SendStatus(fiber.StatusInternalServerError)
+}
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",
@@ -63,7 +70,16 @@ func (h *handler) signup(c fiber.Ctx) error {
     }
 	user, token, err := h.service.Register(req.Username, req.Email, req.Password)
 	if err != nil {
-		return err
+		if errors.Is(err, ErrEmailExists) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"message": "Почта уже зарегестрирована",
+			})
+		} else if errors.Is(err, ErrUsernameExists) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"message": "Пользователь с таким именем уже существует",
+			})
+		}
+		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
 	c.Cookie(&fiber.Cookie{
@@ -99,7 +115,7 @@ func (h *handler) restoreSession(c fiber.Ctx) error {
 
 	user, err := h.service.ValidateToken(tokenString)
 	if err != nil {
-		return err
+		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(user)
