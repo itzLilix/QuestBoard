@@ -2,47 +2,54 @@ package games
 
 import (
 	"github.com/gofiber/fiber/v3"
+	"github.com/itzLilix/QuestBoard/backend/internal/auth"
+	"github.com/itzLilix/QuestBoard/backend/internal/middleware"
 	"github.com/jackc/pgx/v5"
 )
 
-type Handler struct {
+type Handler interface {
+	RegisterRoutes(app *fiber.App)
+}
+
+type handler struct {
     db *pgx.Conn
+	authService auth.Service
 }
 
-func NewHandler(db *pgx.Conn) *Handler {
-	return &Handler{db: db}
+func NewHandler(db *pgx.Conn, authService auth.Service) Handler {
+	return &handler{db: db, authService: authService}
 }
 
-func (h *Handler) RegisterRoutes(app *fiber.App) {
+func (h *handler) RegisterRoutes(app *fiber.App) {
 	games := app.Group("/games")
 	games.Get("/", h.getGames)
 	games.Get("/:id", h.getGameById)
-	games.Post("/", h.createGame)
+	games.Post("/", middleware.Protected(h.authService), h.createGame)
 	games.Patch("/:id", h.editGame)
 	games.Delete("/:id", h.deleteGameById)
 	games.Post("/:id/join", h.addPlayerToGame)
 }
 
-func (h *Handler) getGames(c fiber.Ctx) error {
+func (h *handler) getGames(c fiber.Ctx) error {
 	return nil;
 }
 
-func (h *Handler) getGameById(c fiber.Ctx) error {
+func (h *handler) getGameById(c fiber.Ctx) error {
 	return nil;
 }
 
-func (h *Handler) createGame(c fiber.Ctx) error {
+func (h *handler) createGame(c fiber.Ctx) error {
 	return nil;
 }
 
-func (h *Handler) editGame(c fiber.Ctx) error {
+func (h *handler) editGame(c fiber.Ctx) error {
 	return nil;
 }
 
-func (h *Handler) deleteGameById(c fiber.Ctx) error {
+func (h *handler) deleteGameById(c fiber.Ctx) error {
 	return nil;
 }
 
-func (h *Handler) addPlayerToGame(c fiber.Ctx) error {
+func (h *handler) addPlayerToGame(c fiber.Ctx) error {
 	return nil;
 }

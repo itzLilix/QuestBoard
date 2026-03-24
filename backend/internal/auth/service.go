@@ -18,11 +18,19 @@ type Service interface {
 	ValidateToken(tokenString string) (*User, error)
 }
 
+type service struct {
+	repo Repository
+}
+
 type claims struct {
 	ID string
 	Username string
 	Role string
 	jwt.RegisteredClaims
+}
+
+func NewService(repo Repository) Service {
+	return &service{repo: repo}
 }
 
 func (s *service) ValidateToken(tokenString string) (*User, error){
@@ -43,14 +51,6 @@ func (s *service) ValidateToken(tokenString string) (*User, error){
 		return nil, fmt.Errorf("unknown claims type")
 	}
 	return user, nil
-}
-
-type service struct {
-	repo Repository
-}
-
-func NewService(repo Repository) *service {
-	return &service{repo: repo}
 }
 
 func (s *service) Register(username, email, password string) (*User, string, error) {

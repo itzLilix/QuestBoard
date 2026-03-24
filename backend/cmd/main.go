@@ -46,7 +46,7 @@ func main() {
 	authService := auth.NewService(authRepo)
 	authHandler := auth.NewHandler(authService)
 	
-	gamesHandler := games.NewHandler(conn)
+	gamesHandler := games.NewHandler(conn, authService)
 	
 	authHandler.RegisterRoutes(app)
 	gamesHandler.RegisterRoutes(app)
