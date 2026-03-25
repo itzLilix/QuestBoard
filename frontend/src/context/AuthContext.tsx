@@ -18,7 +18,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 			.then((response) => {
 				setUser(response.data);
 			})
-			.catch(() => {})
+			.catch(async (error) => {
+				if (error.response?.status === 401) {
+					try {
+						await api.get("/auth/refresh");
+						const response = await api.get("/auth/me");
+						setUser(response.data);
+					} catch {
+						setUser(null);
+					}
+				}
+			})
 			.finally(() => {
 				setIsLoading(false);
 			});

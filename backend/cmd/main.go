@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -34,7 +33,7 @@ func main() {
 		log.Fatal("Failed to connect to database: ", err)
 	}
 	fmt.Println("Successfully connected to database")
-	defer conn.Close(context.Background())
+	defer conn.Close()
 
 	err = database.RunMigrations(os.Getenv("MIGRATE_URL"))
 	if err != nil {
@@ -46,7 +45,7 @@ func main() {
 	authService := auth.NewService(authRepo)
 	authHandler := auth.NewHandler(authService)
 	
-	gamesHandler := games.NewHandler(conn, authService)
+	gamesHandler := games.NewHandler(authService)
 	
 	authHandler.RegisterRoutes(app)
 	gamesHandler.RegisterRoutes(app)

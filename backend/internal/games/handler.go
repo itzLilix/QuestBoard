@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/itzLilix/QuestBoard/backend/internal/auth"
 	"github.com/itzLilix/QuestBoard/backend/internal/middleware"
-	"github.com/jackc/pgx/v5"
 )
 
 type Handler interface {
@@ -12,12 +11,11 @@ type Handler interface {
 }
 
 type handler struct {
-    db *pgx.Conn
 	authService auth.Service
 }
 
-func NewHandler(db *pgx.Conn, authService auth.Service) Handler {
-	return &handler{db: db, authService: authService}
+func NewHandler(authService auth.Service) Handler {
+	return &handler{ authService: authService}
 }
 
 func (h *handler) RegisterRoutes(app *fiber.App) {

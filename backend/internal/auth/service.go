@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -13,9 +16,11 @@ import (
 )
 
 type Service interface {
-	Register(username, email, password string) (*User, string, error)
-	Login(username, password string) (*User, string, error)
+	Register(username, email, password string) (*User, string, string, error)
+	Login(username, password string) (*User, string, string, error)
+	Logout(refreshToken string) error
 	ValidateToken(tokenString string) (*User, error)
+	RefreshTokens(refreshToken string) (*User, string, string, error)
 }
 
 type service struct {
@@ -23,9 +28,9 @@ type service struct {
 }
 
 type claims struct {
-	ID string
+	ID       string
 	Username string
-	Role string
+	Role     string
 	jwt.RegisteredClaims
 }
 
@@ -33,7 +38,7 @@ func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) ValidateToken(tokenString string) (*User, error){
+func (s *service) ValidateToken(tokenString string) (*User, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &claims{}, func(token *jwt.Token) (any, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
@@ -53,10 +58,10 @@ func (s *service) ValidateToken(tokenString string) (*User, error){
 	return user, nil
 }
 
-func (s *service) Register(username, email, password string) (*User, string, error) {
+func (s *service) Register(username, email, password string) (*User, string, string, error) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	user := &User{
@@ -69,43 +74,71 @@ func (s *service) Register(username, email, password string) (*User, string, err
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			if strings.Contains(pgErr.ConstraintName, "username") {
-				return nil, "", ErrUsernameExists
+				return nil, "", "", ErrUsernameExists
 			}
 			if strings.Contains(pgErr.ConstraintName, "email") {
-				return nil, "", ErrEmailExists
-    }
+				return nil, "", "", ErrEmailExists
+			}
 		}
-		return nil, "", err
+		return nil, "", "", err
 	}
 
-	token, err := s.generateAccessToken(user)
+	s.repo.UpdateLastLogin(user)
+
+	accessToken, err := s.generateAccessToken(user)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
-	return user, token, nil
+	refreshToken, err := s.generateRefreshToken(user)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	return user, accessToken, refreshToken, nil
 }
 
-func (s *service) Login(username, password string) (*User, string, error) {
+func (s *service) Login(username, password string) (*User, string, string, error) {
 	user, err := s.repo.GetUserByUsername(username)
 	if err != nil {
-		return nil, "", ErrUserNotFound
+		return nil, "", "", ErrUserNotFound
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return nil, "", ErrWrongPassword
+		return nil, "", "", ErrWrongPassword
 	}
 
-	token, err := s.generateAccessToken(user)
+	s.repo.UpdateLastLogin(user)
+
+	accessToken, err := s.generateAccessToken(user)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
-	return user, token, nil
+
+	refreshToken, err := s.generateRefreshToken(user)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	return user, accessToken, refreshToken, nil
+}
+
+func (s *service) Logout(refreshToken string) error {
+	if refreshToken == "" {
+		return nil
+	}
+
+	prefix := refreshToken[:8]
+	if err := s.repo.DeleteRefreshToken(prefix); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *service) generateAccessToken(user *User) (string, error) {
-	expirationTime := time.Now().Add(15 * time.Minute)
+	expirationTime := time.Now().Add(15 * time.Second)
 	secretKey := []byte(os.Getenv("JWT_SECRET"))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims{
@@ -121,5 +154,64 @@ func (s *service) generateAccessToken(user *User) (string, error) {
 }
 
 func (s *service) generateRefreshToken(user *User) (string, error) {
-	return "", nil
+	tokenBytes := make([]byte, 32)
+	rand.Read(tokenBytes)
+	tokenString := hex.EncodeToString(tokenBytes)
+
+	prefix := tokenString[:8]
+	hash := sha256.Sum256([]byte(tokenString))
+	hashString := hex.EncodeToString(hash[:])
+
+	token := &RefreshToken{
+		UserID:      user.ID,
+		TokenPrefix: string(prefix),
+		TokenHash:   hashString,
+		ExpiresAt:   time.Now().AddDate(0, 0, 30),
+	}
+	err := s.repo.SaveRefreshToken(token)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func (s *service) RefreshTokens(clientToken string) (*User, string, string, error) {
+	prefix := clientToken[:8]
+	storedToken, err := s.repo.GetRefreshTokenByPrefix(prefix)
+	if err != nil {
+		return nil, "", "", ErrInvalidToken
+	}
+
+	clientHashBytes := sha256.Sum256([]byte(clientToken))
+	clientHash := hex.EncodeToString(clientHashBytes[:])
+
+	if !strings.EqualFold(storedToken.TokenHash, clientHash) {
+		fmt.Println(storedToken.TokenHash, clientHash)
+		return nil, "", "", ErrInvalidToken
+	}
+	if storedToken.ExpiresAt.Before(time.Now()){
+		return nil, "", "", ErrInvalidToken
+	}
+	
+	if err := s.repo.DeleteRefreshToken(prefix); err != nil {
+		return nil, "", "", err
+	}
+
+	user, err := s.repo.GetUserByID(storedToken.UserID)
+	if err != nil {
+		return nil, "", "", ErrUserNotFound
+	}
+
+	accessToken, err := s.generateAccessToken(user)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	refreshToken, err := s.generateRefreshToken(user)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	return user, accessToken, refreshToken, nil
 }

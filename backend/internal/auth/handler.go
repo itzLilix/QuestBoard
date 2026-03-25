@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -37,19 +38,28 @@ func (h *handler) login(c fiber.Ctx) error {
 	if err := c.Bind().Body(&req); err != nil {
 		return err
 	}
-	user, token, err := h.service.Login(req.Username, req.Password)
+	user, accessToken, refreshToken, err := h.service.Login(req.Username, req.Password)
 	if err != nil {
     if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrWrongPassword) {
         return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
             "message": "Неверное имя пользователя или пароль",
         })
     }
+
     return c.SendStatus(fiber.StatusInternalServerError)
 }
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",
-		Value:    token,
+		Value:    accessToken,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
 		HTTPOnly: true,
 		Secure:   true,
 		SameSite: "Strict",
@@ -68,7 +78,7 @@ func (h *handler) signup(c fiber.Ctx) error {
 	if err := c.Bind().Body(&req); err != nil {
         return err
     }
-	user, token, err := h.service.Register(req.Username, req.Email, req.Password)
+	user, accessToken, refreshToken, err := h.service.Register(req.Username, req.Email, req.Password)
 	if err != nil {
 		if errors.Is(err, ErrEmailExists) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
@@ -84,7 +94,15 @@ func (h *handler) signup(c fiber.Ctx) error {
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",
-		Value:    token,
+		Value:    accessToken,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
 		HTTPOnly: true,
 		Secure:   true,
 		SameSite: "Strict",
@@ -94,8 +112,11 @@ func (h *handler) signup(c fiber.Ctx) error {
 }
 
 func (h *handler) logout(c fiber.Ctx) error {
-	c.ClearCookie("access_token")
-	return c.SendStatus(fiber.StatusOK)
+	refreshToken := c.Cookies("refresh_token")
+    h.service.Logout(refreshToken)
+    c.ClearCookie("access_token")
+    c.ClearCookie("refresh_token")
+    return c.SendStatus(fiber.StatusOK)
 }
 
 func (h *handler) activate(c fiber.Ctx) error {
@@ -103,7 +124,38 @@ func (h *handler) activate(c fiber.Ctx) error {
 }
 
 func (h *handler) refresh(c fiber.Ctx) error {
-	return nil;
+	oldRefreshToken := c.Cookies("refresh_token")
+	fmt.Println(oldRefreshToken)
+	if oldRefreshToken == "" {
+    	return c.SendStatus(fiber.StatusUnauthorized)
+	}
+	
+	fmt.Println("1")
+	user, accessToken, refreshToken, err := h.service.RefreshTokens(oldRefreshToken)
+	if err != nil {
+		fmt.Println(err)
+
+		return  c.SendStatus(fiber.StatusUnauthorized)
+	}
+	fmt.Println("2")
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	return c.Status(fiber.StatusOK).JSON(user)
 }
 
 func (h *handler) restoreSession(c fiber.Ctx) error {

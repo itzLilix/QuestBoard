@@ -3,17 +3,26 @@ package auth
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository interface {
 	CreateUser(user *User) error
 	GetUserByUsername(username string) (*User, error)
 	GetUserByID(id string) (*User, error)
+	SaveRefreshToken(token *RefreshToken) error
+	GetRefreshTokenByPrefix(prefix string) (*RefreshToken, error)
+	DeleteRefreshToken(prefix string) error
+	UpdateLastLogin(user *User) error
 }
 
 type repository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
+}
+
+
+func NewRepository(db *pgxpool.Pool) Repository {
+	return &repository{db: db}
 }
 
 func (r *repository) GetUserByID(id string) (*User, error) {
@@ -46,6 +55,32 @@ func (r *repository) GetUserByUsername(username string) (*User, error) {
 	return user, nil
 }
 
-func NewRepository(db *pgx.Conn) Repository {
-	return &repository{db: db}
+func (r *repository) SaveRefreshToken(token *RefreshToken) error {
+	row := r.db.QueryRow(context.Background(),
+	"INSERT INTO refresh_tokens (user_id, token_prefix, token_hash, expires_at) VALUES ($1, $2, $3, $4) RETURNING id, created_at",
+	token.UserID, token.TokenPrefix, token.TokenHash, token.ExpiresAt)
+	err := row.Scan(&token.ID, &token.CreatedAt)
+	return err
+}
+
+func (r *repository) GetRefreshTokenByPrefix(prefix string) (*RefreshToken, error) {
+	row := r.db.QueryRow(context.Background(),
+	"SELECT * FROM refresh_tokens WHERE token_prefix=$1", prefix)
+	token := &RefreshToken{}
+	err := row.Scan(&token.ID, &token.UserID, &token.TokenPrefix, &token.TokenHash, &token.ExpiresAt, &token.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+
+func (r *repository) DeleteRefreshToken(prefix string) error {
+	_, err := r.db.Exec(context.Background(), "DELETE FROM refresh_tokens WHERE token_prefix=$1", prefix)
+	return err
+}
+
+func (r *repository) UpdateLastLogin(user *User) error {
+	row := r.db.QueryRow(context.Background(), "UPDATE users SET last_login = NOW() WHERE id = $1 RETURNING last_login", user.ID)
+	err := row.Scan(&user.LastLogin)
+	return err
 }
