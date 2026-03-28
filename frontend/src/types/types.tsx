@@ -5,4 +5,6 @@ export interface IUser {
 	bannerUrl?: string;
 	role: "user" | "admin";
 	accessToken?: string;
+	displayName?: string;
+	isEmailVerified: boolean;
 }

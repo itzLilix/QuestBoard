@@ -12,6 +12,8 @@ type User struct {
 	AvatarURL    *string   	`json:"avatarUrl,omitempty"`
 	BannerURL    *string   	`json:"bannerUrl,omitempty"`
 	Role         string   	`json:"role"`
+	DisplayName  *string	`json:"displayName,omitempty"`
+	IsEmailVerified bool `json:"isEmailVerified"`
 }
 
 type RefreshToken struct {
