@@ -3,9 +3,13 @@ package auth
 import (
 	"context"
 
+	"github.com/itzLilix/QuestBoard/backend/internal/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type User = models.User
+type RefreshToken = models.RefreshToken
 
 type Repository interface {
 	CreateUser(user *User) error
