@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/itzLilix/QuestBoard/backend/internal/models"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -28,30 +27,11 @@ func NewRepository(db *pgxpool.Pool) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) scanUser(row pgx.Row, user *models.User) error{
-	return row.Scan(
-		&user.ID, 
-		&user.Username, 
-		&user.PasswordHash, 
-		&user.Email, 
-		&user.CreatedAt, 
-		&user.LastLogin, 
-		&user.AvatarURL, 
-		&user.BannerURL, 
-		&user.Role, 
-		&user.DisplayName, 
-		&user.IsEmailVerified,
-		&user.SessionsPlayed,
-		&user.SessionsHosted,
-		&user.Rating,
-		&user.ReviewsCount)
-}
-
 func (r *repository) GetUserByID(id string) (*models.User, error) {
 	row := r.db.QueryRow(context.Background(),
 		"SELECT * FROM users WHERE id=$1", id)
 	user := &models.User{}
-	err := r.scanUser(row, user)
+	err := models.ScanUser(row, user)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +50,7 @@ func (r *repository) GetUserByEmail(email string) (*models.User, error) {
 	row := r.db.QueryRow(context.Background(),
 		"SELECT * FROM users WHERE email=$1", email)
 	user := &models.User{}
-	err := r.scanUser(row, user)
+	err := models.ScanUser(row, user)
 	if err != nil {
 		return nil, err
 	}

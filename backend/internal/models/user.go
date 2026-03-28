@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/jackc/pgx/v5"
+)
 
 type User struct {
 	ID           	string   	`json:"id"`
@@ -27,4 +31,23 @@ type RefreshToken struct {
 	TokenHash string `json:"tokenHash"`
 	ExpiresAt time.Time `json:"expiresAt"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+func ScanUser(row pgx.Row, user *User) error{
+	return row.Scan(
+		&user.ID, 
+		&user.Username, 
+		&user.PasswordHash, 
+		&user.Email, 
+		&user.CreatedAt, 
+		&user.LastLogin, 
+		&user.AvatarURL, 
+		&user.BannerURL, 
+		&user.Role, 
+		&user.DisplayName, 
+		&user.IsEmailVerified,
+		&user.SessionsPlayed,
+		&user.SessionsHosted,
+		&user.Rating,
+		&user.ReviewsCount)
 }
