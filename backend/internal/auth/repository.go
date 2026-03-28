@@ -27,7 +27,22 @@ func NewRepository(db *pgxpool.Pool) Repository {
 }
 
 func (r *repository) scanUser(row pgx.Row, user *User) error{
-	return row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.CreatedAt, &user.LastLogin, &user.AvatarURL, &user.BannerURL, &user.Role, &user.DisplayName, &user.IsEmailVerified)
+	return row.Scan(
+		&user.ID, 
+		&user.Username, 
+		&user.PasswordHash, 
+		&user.Email, 
+		&user.CreatedAt, 
+		&user.LastLogin, 
+		&user.AvatarURL, 
+		&user.BannerURL, 
+		&user.Role, 
+		&user.DisplayName, 
+		&user.IsEmailVerified,
+		&user.SessionsPlayed,
+		&user.SessionsHosted,
+		&user.Rating,
+		&user.ReviewsCount)
 }
 
 func (r *repository) GetUserByID(id string) (*User, error) {

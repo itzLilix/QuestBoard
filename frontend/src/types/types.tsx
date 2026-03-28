@@ -7,4 +7,8 @@ export interface IUser {
 	accessToken?: string;
 	displayName?: string;
 	isEmailVerified: boolean;
+	sessionsPlayed: number;
+	sessionsHosted: number;
+	rating: number;
+	reviewsCount: number;
 }

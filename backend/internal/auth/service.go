@@ -187,7 +187,6 @@ func (s *service) RefreshTokens(clientToken string) (*User, string, string, erro
 	clientHash := hex.EncodeToString(clientHashBytes[:])
 
 	if !strings.EqualFold(storedToken.TokenHash, clientHash) {
-		fmt.Println(storedToken.TokenHash, clientHash)
 		return nil, "", "", ErrInvalidToken
 	}
 	if storedToken.ExpiresAt.Before(time.Now()){
