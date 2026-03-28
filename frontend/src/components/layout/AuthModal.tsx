@@ -7,7 +7,7 @@ import Button from "../ui/Button";
 import { api } from "../../api/axios";
 import { AxiosError } from "axios";
 import useAuth from "../../hooks/useAuth";
-import { error } from "console";
+import FieldLabel from "../ui/InputLabel";
 
 const LOGIN_URL = "/auth/login";
 const REGISTER_URL = "/auth/signup";
@@ -24,6 +24,8 @@ export default function AuthModal() {
 	const [pwd, setPwd] = useState("");
 	const [email, setEmail] = useState("");
 	const [errMsg, setErrMsg] = useState("");
+
+	const isLogin = modalType === "login";
 
 	useEffect(() => {
 		setErrMsg("");
@@ -50,7 +52,7 @@ export default function AuthModal() {
 
 	const handleLogin = async () => {
 		const response = await api.post(LOGIN_URL, {
-			username: user,
+			email: email,
 			password: pwd,
 		});
 		console.log(response);
@@ -117,117 +119,79 @@ export default function AuthModal() {
 						Регистрация
 					</Tab>
 				</nav>
-				<span className="absolute top-[220px] left-1/2 transform -translate-x-1/2 text-sm text-[var(--error)] text-center">
-					{errMsg}
-				</span>
-				{modalType === "login" ? (
-					<div key="login">
-						<form
-							onSubmit={handleSubmit}
-							className="flex flex-col gap-4 mt-6"
-						>
-							<div className="flex flex-col gap-2">
-								<span className="text-base text-[var(--text-primary)]">
-									Имя пользователя
-								</span>
-								<Input
-									csize="md"
-									className="w-full"
-									name="username"
-									onChange={(e) => setUser(e.target.value)}
-									required
-								></Input>
-							</div>
-							<div className="flex flex-col gap-2">
-								<span className="text-base text-[var(--text-primary)]">
-									Пароль
-								</span>
-								<Input
-									type="password"
-									csize="md"
-									className="w-full"
-									name="password"
-									onChange={(e) => setPwd(e.target.value)}
-									required
-								></Input>
-								<Link
-									to="/auth/reset-password"
-									onClick={closeModal}
-									className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] self-center mt-2"
-								>
-									Сброс пароля
-								</Link>
-							</div>
-							<Button
-								variant={"primary"}
-								csize={"md"}
-								type="submit"
-								className="mx-6 mt-6"
-							>
-								Войти
-							</Button>
-						</form>
-						<div className="flex items-center gap-4 my-12 mx-24">
-							<div className="flex-1 border-t border-[var(--accent)]"></div>
-							<span className="text-base font-body text-[var(--accent)]">
-								или
-							</span>
-							<div className="flex-1 border-t border-[var(--accent)]"></div>
-						</div>
+
+				<form
+					key={modalType}
+					onSubmit={handleSubmit}
+					className="flex flex-col gap-4"
+				>
+					<span className="h-6 text-sm text-[var(--error)] text-center">
+						{errMsg}
+					</span>
+
+					<div className="flex flex-col gap-2">
+						<FieldLabel>Электронная почта</FieldLabel>
+						<Input
+							csize="md"
+							className="w-full"
+							type="email"
+							name="email"
+							onChange={(e) => setEmail(e.target.value)}
+							required
+						/>
 					</div>
-				) : (
-					<div key="register">
-						<form
-							onSubmit={handleSubmit}
-							className="flex flex-col gap-4 mt-6"
-						>
-							<div className="flex flex-col gap-2">
-								<span className="text-base text-[var(--text-primary)]">
-									Электронная почта
-								</span>
-								<Input
-									csize="md"
-									className="w-full"
-									type="email"
-									name="email"
-									onChange={(e) => setEmail(e.target.value)}
-									required
-								></Input>
-							</div>
-							<div className="flex flex-col gap-2">
-								<span className="text-base text-[var(--text-primary)]">
-									Имя пользователя
-								</span>
-								<Input
-									csize="md"
-									className="w-full"
-									name="username"
-									onChange={(e) => setUser(e.target.value)}
-									required
-								></Input>
-							</div>
-							<div className="flex flex-col gap-2">
-								<span className="text-base text-[var(--text-primary)]">
-									Пароль
-								</span>
-								<Input
-									type="password"
-									csize="md"
-									className="w-full"
-									name="password"
-									onChange={(e) => setPwd(e.target.value)}
-									required
-								></Input>
-							</div>
-							<Button
-								variant={"primary"}
-								csize={"md"}
-								type="submit"
-								className="mx-6 mt-6"
+
+					{!isLogin && (
+						<div className="flex flex-col gap-2">
+							<FieldLabel>Имя пользователя</FieldLabel>
+							<Input
+								csize="md"
+								className="w-full"
+								name="username"
+								onChange={(e) => setUser(e.target.value)}
+								required
+							/>
+						</div>
+					)}
+
+					<div className="flex flex-col gap-2">
+						<FieldLabel>Пароль</FieldLabel>
+						<Input
+							type="password"
+							csize="md"
+							className="w-full"
+							name="password"
+							onChange={(e) => setPwd(e.target.value)}
+							required
+						/>
+						{isLogin && (
+							<Link
+								to="/auth/reset-password"
+								onClick={closeModal}
+								className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] self-center mt-2"
 							>
-								Зарегистрироваться
-							</Button>
-						</form>
+								Сброс пароля
+							</Link>
+						)}
+					</div>
+
+					<Button
+						variant="primary"
+						csize="md"
+						type="submit"
+						className="mx-6 mt-6"
+					>
+						{isLogin ? "Войти" : "Зарегистрироваться"}
+					</Button>
+				</form>
+
+				{isLogin && (
+					<div className="flex items-center gap-4 my-12 mx-24">
+						<div className="flex-1 border-t border-[var(--accent)]" />
+						<span className="text-base font-body text-[var(--accent)]">
+							или
+						</span>
+						<div className="flex-1 border-t border-[var(--accent)]" />
 					</div>
 				)}
 			</div>

@@ -98,8 +98,8 @@ func (s *service) Register(username, email, password string) (*User, string, str
 	return user, accessToken, refreshToken, nil
 }
 
-func (s *service) Login(username, password string) (*User, string, string, error) {
-	user, err := s.repo.GetUserByUsername(username)
+func (s *service) Login(email, password string) (*User, string, string, error) {
+	user, err := s.repo.GetUserByEmail(email)
 	if err != nil {
 		return nil, "", "", ErrUserNotFound
 	}

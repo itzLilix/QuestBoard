@@ -31,23 +31,22 @@ func (h *handler) RegisterRoutes(app *fiber.App) {
 
 func (h *handler) login(c fiber.Ctx) error {
 	type request struct {
-		Username string `json:"username"`
+		Email string `json:"email"`
 		Password string `json:"password"`
 	}
 	var req request
 	if err := c.Bind().Body(&req); err != nil {
 		return err
 	}
-	user, accessToken, refreshToken, err := h.service.Login(req.Username, req.Password)
+	user, accessToken, refreshToken, err := h.service.Login(req.Email, req.Password)
 	if err != nil {
-    if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrWrongPassword) {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-            "message": "Неверное имя пользователя или пароль",
-        })
-    }
-
-    return c.SendStatus(fiber.StatusInternalServerError)
-}
+		if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrWrongPassword) {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "Неверная почта или пароль",
+			})
+		}
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",
@@ -130,14 +129,10 @@ func (h *handler) refresh(c fiber.Ctx) error {
     	return c.SendStatus(fiber.StatusUnauthorized)
 	}
 	
-	fmt.Println("1")
 	user, accessToken, refreshToken, err := h.service.RefreshTokens(oldRefreshToken)
 	if err != nil {
-		fmt.Println(err)
-
 		return  c.SendStatus(fiber.StatusUnauthorized)
 	}
-	fmt.Println("2")
 
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",

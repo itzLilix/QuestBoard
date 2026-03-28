@@ -8,7 +8,7 @@ import (
 
 type Repository interface {
 	CreateUser(user *User) error
-	GetUserByUsername(username string) (*User, error)
+	GetUserByEmail(email string) (*User, error)
 	GetUserByID(id string) (*User, error)
 	SaveRefreshToken(token *RefreshToken) error
 	GetRefreshTokenByPrefix(prefix string) (*RefreshToken, error)
@@ -44,9 +44,9 @@ func (r *repository) CreateUser(user *User) error {
 	return err
 }
 
-func (r *repository) GetUserByUsername(username string) (*User, error) {
+func (r *repository) GetUserByEmail(email string) (*User, error) {
 	row := r.db.QueryRow(context.Background(),
-		"SELECT * FROM users WHERE username=$1", username)
+		"SELECT * FROM users WHERE email=$1", email)
 	user := &User{}
 	err := row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email, &user.CreatedAt, &user.LastLogin, &user.AvatarURL, &user.BannerURL, &user.Role)
 	if err != nil {
