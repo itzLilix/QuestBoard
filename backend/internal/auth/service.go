@@ -11,16 +11,17 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/itzLilix/QuestBoard/backend/internal/models"
 	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
-	Register(username, email, password string) (*User, string, string, error)
-	Login(username, password string) (*User, string, string, error)
+	Register(username, email, password string) (*models.User, string, string, error)
+	Login(username, password string) (*models.User, string, string, error)
 	Logout(refreshToken string) error
-	ValidateToken(tokenString string) (*User, error)
-	RefreshTokens(refreshToken string) (*User, string, string, error)
+	ValidateToken(tokenString string) (*models.User, error)
+	RefreshTokens(refreshToken string) (*models.User, string, string, error)
 }
 
 type service struct {
@@ -38,12 +39,12 @@ func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) ValidateToken(tokenString string) (*User, error) {
+func (s *service) ValidateToken(tokenString string) (*models.User, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &claims{}, func(token *jwt.Token) (any, error) {
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
-	var user *User
+	var user *models.User
 
 	if err != nil {
 		return nil, ErrInvalidToken
@@ -58,13 +59,13 @@ func (s *service) ValidateToken(tokenString string) (*User, error) {
 	return user, nil
 }
 
-func (s *service) Register(username, email, password string) (*User, string, string, error) {
+func (s *service) Register(username, email, password string) (*models.User, string, string, error) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, "", "", err
 	}
 
-	user := &User{
+	user := &models.User{
 		Username:     username,
 		Email:        email,
 		PasswordHash: string(passwordHash),
@@ -98,7 +99,7 @@ func (s *service) Register(username, email, password string) (*User, string, str
 	return user, accessToken, refreshToken, nil
 }
 
-func (s *service) Login(email, password string) (*User, string, string, error) {
+func (s *service) Login(email, password string) (*models.User, string, string, error) {
 	user, err := s.repo.GetUserByEmail(email)
 	if err != nil {
 		return nil, "", "", ErrUserNotFound
@@ -137,7 +138,7 @@ func (s *service) Logout(refreshToken string) error {
 	return nil
 }
 
-func (s *service) generateAccessToken(user *User) (string, error) {
+func (s *service) generateAccessToken(user *models.User) (string, error) {
 	expirationTime := time.Now().Add(15 * time.Second)
 	secretKey := []byte(os.Getenv("JWT_SECRET"))
 
@@ -153,7 +154,7 @@ func (s *service) generateAccessToken(user *User) (string, error) {
 	return token.SignedString(secretKey)
 }
 
-func (s *service) generateRefreshToken(user *User) (string, error) {
+func (s *service) generateRefreshToken(user *models.User) (string, error) {
 	tokenBytes := make([]byte, 32)
 	rand.Read(tokenBytes)
 	tokenString := hex.EncodeToString(tokenBytes)
@@ -162,7 +163,7 @@ func (s *service) generateRefreshToken(user *User) (string, error) {
 	hash := sha256.Sum256([]byte(tokenString))
 	hashString := hex.EncodeToString(hash[:])
 
-	token := &RefreshToken{
+	token := &models.RefreshToken{
 		UserID:      user.ID,
 		TokenPrefix: string(prefix),
 		TokenHash:   hashString,
@@ -176,7 +177,7 @@ func (s *service) generateRefreshToken(user *User) (string, error) {
 	return tokenString, nil
 }
 
-func (s *service) RefreshTokens(clientToken string) (*User, string, string, error) {
+func (s *service) RefreshTokens(clientToken string) (*models.User, string, string, error) {
 	prefix := clientToken[:8]
 	storedToken, err := s.repo.GetRefreshTokenByPrefix(prefix)
 	if err != nil {
