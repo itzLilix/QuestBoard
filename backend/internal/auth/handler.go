@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -124,7 +123,6 @@ func (h *handler) activate(c fiber.Ctx) error {
 
 func (h *handler) refresh(c fiber.Ctx) error {
 	oldRefreshToken := c.Cookies("refresh_token")
-	fmt.Println(oldRefreshToken)
 	if oldRefreshToken == "" {
     	return c.SendStatus(fiber.StatusUnauthorized)
 	}
