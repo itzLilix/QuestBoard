@@ -96,9 +96,9 @@ export default function AuthModal() {
 				className="fixed inset-0 bg-black/20 z-40"
 				onClick={closeModal}
 			></div>
-			<div className="fixed h-[720px] w-[600px] m-auto inset-0 bg-[var(--bg-base-tp)] backdrop-blur-lg flex items-stretch justify-start flex-col rounded-2xl border border-[var(--border)] p-12 gap-6 z-50">
-				<div className="text-3xl font-display text-[var(--text-primary)] select-none mx-auto mt-6">
-					<span className="text-[var(--accent)]">Quest</span>
+			<div className="fixed h-[720px] w-[600px] m-auto inset-0 bg-(--bg-base-tp) backdrop-blur-lg flex items-stretch justify-start flex-col rounded-2xl border border-(--border) p-12 gap-6 z-50">
+				<div className="text-3xl font-display text-(--text-primary) select-none mx-auto mt-6">
+					<span className="text-(--accent)">Quest</span>
 					<span>Board</span>
 				</div>
 				<nav className="w-full flex justify-center gap-6 text-3xl">
@@ -125,7 +125,7 @@ export default function AuthModal() {
 					onSubmit={handleSubmit}
 					className="flex flex-col gap-4"
 				>
-					<span className="h-6 text-sm text-[var(--error)] text-center">
+					<span className="h-6 text-sm text-(--error) text-center">
 						{errMsg}
 					</span>
 
@@ -168,7 +168,7 @@ export default function AuthModal() {
 							<Link
 								to="/auth/reset-password"
 								onClick={closeModal}
-								className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] self-center mt-2"
+								className="text-sm text-(--text-secondary) hover:text-(--accent) self-center mt-2"
 							>
 								Сброс пароля
 							</Link>
@@ -187,11 +187,11 @@ export default function AuthModal() {
 
 				{isLogin && (
 					<div className="flex items-center gap-4 my-12 mx-24">
-						<div className="flex-1 border-t border-[var(--accent)]" />
-						<span className="text-base font-body text-[var(--accent)]">
+						<div className="flex-1 border-t border-(--accent)" />
+						<span className="text-base font-body text-(--accent)">
 							или
 						</span>
-						<div className="flex-1 border-t border-[var(--accent)]" />
+						<div className="flex-1 border-t border-(--accent)" />
 					</div>
 				)}
 			</div>

@@ -12,25 +12,25 @@ export default function Header() {
 	const { openModal } = useAuthModal();
 
 	return (
-		<header className="bg-[var(--bg-base-tp)] h-18 z-10 sticky top-0 w-full border-b border-[var(--border)] backdrop-blur-sm">
+		<header className="bg-(--bg-base-tp) h-18 z-10 sticky top-0 w-full border-b border-(--border) backdrop-blur-sm">
 			<div className="p-4 flex items-center justify-between h-full max-w-1600 mx-auto">
 				<Link
 					to="/"
-					className="text-[var(--text-primary)] text-2xl font-display select-none"
+					className="text-(--text-primary) text-2xl font-display select-none"
 				>
-					<span className="text-[var(--accent)]">Quest</span>
+					<span className="text-(--accent)">Quest</span>
 					<span>Board</span>
 				</Link>
 				<div className="flex items-center space-x-4">
 					<Link
 						to="#"
-						className="text-[var(--text-secondary)] hover:text-[var(--accent)]"
+						className="text-(--text-secondary) hover:text-(--accent)"
 					>
 						Сессии
 					</Link>
 					<Link
 						to="#"
-						className="text-[var(--text-secondary)] hover:text-[var(--accent)]"
+						className="text-(--text-secondary) hover:text-(--accent)"
 					>
 						Мастера
 					</Link>
@@ -45,7 +45,7 @@ export default function Header() {
 					<div className="flex items-center gap-6">
 						<NotificationBell />
 						<div className="flex items-center gap-2">
-							<span className="text-[var(--text-primary)]">
+							<span className="text-(--text-primary)">
 								{user.username}
 							</span>
 							{user.avatarUrl ? (
@@ -55,7 +55,7 @@ export default function Header() {
 									className="w-8 h-8 rounded-full"
 								/>
 							) : (
-								<div className="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-sm">
+								<div className="w-8 h-8 rounded-full bg-(--accent) flex items-center justify-center text-sm">
 									{user.username[0].toUpperCase()}
 								</div>
 							)}

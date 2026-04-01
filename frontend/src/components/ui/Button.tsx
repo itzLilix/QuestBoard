@@ -9,17 +9,17 @@ const buttonVariants = cva(
         font-base 
         transition-colors duration-200 
         focus:outline-none 
-        focus-visible:ring-2 focus-visible:ring-[var(--accent)] 
-        focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)] 
+        focus-visible:ring-2 focus-visible:ring-(--accent) 
+        focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-base) 
         active:scale-95 
         disabled:opacity-50 disabled:pointer-events-none`,
 	{
 		variants: {
 			variant: {
 				primary:
-					"bg-[var(--accent)] text-[var(--text-primary)] hover:bg-[var(--accent-hover)]",
+					"bg-(--accent) text-(--text-primary) hover:bg-(--accent-hover)",
 				secondary:
-					"bg-transparent text-[var(--text-secondary)] border border-[var(--border)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]",
+					"bg-transparent text-(--text-secondary) border border-(--border) hover:bg-(--bg-elevated) hover:text-(--text-primary)",
 			},
 			csize: {
 				sm: "px-4 py-2",

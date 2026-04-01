@@ -1,5 +1,5 @@
-import { createContext, useState, ReactNode, useEffect } from "react";
-import { IUser } from "../types/types";
+import { createContext, useState, type ReactNode, useEffect } from "react";
+import { type IUser } from "../types/types";
 import { api } from "../api/axios";
 
 const AuthContext = createContext({

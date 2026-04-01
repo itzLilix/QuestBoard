@@ -15,7 +15,7 @@ const Tab: FC<TabProps> = ({
 	return (
 		<button
 			type="button"
-			className={`bg-transparent font-display ${isActive ? "text-[var(--accent)] border-[var(--accent)] border-b-2" : "text-[var(--text-primary)]"} ${className || ""}`}
+			className={`bg-transparent font-display ${isActive ? "text-(--accent) border-(--accent) border-b-2" : "text-(--text-primary)"} ${className || ""}`}
 			onClick={onClick}
 			{...props}
 		>
